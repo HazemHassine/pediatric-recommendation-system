@@ -112,8 +112,125 @@ In another phase, `clean_disease_symptom_dataset` focuses on cleaning structured
 * Removing unnecessary columns like Age and Gender.
 * Mapping binary values ("Yes", "No") to numeric (1, 0).
 * Standardizing disease names using a mapping dictionary. The cleaned dataset ensures consistency and readiness for downstream machine learning models.
-
 **Text Normalization and Augmentation**
 To enhance the robustness of the system, the `normalize_text` function standardizes terms like "mg" to "milligrams." Following this, `augment_text` introduces diversity by replacing words with synonyms derived from the WordNet lexical database. This augmentation expands the dataset, aiding in model generalization.
 
-**Text Annotation with Spa
+**Text Annotation with SpaCy**
+The `annotate_text` function leverages SpaCy's Named Entity Recognition (NER) to extract and label entities like symptoms, treatments, and medical conditions from the cleaned data. These annotations help understand the context and importance of the extracted text segments.
+
+**Text Categorization**
+The `categorize_text` function organizes text into categories (e.g., "symptoms," "treatment," "diagnosis") using regular expression patterns. This categorization simplifies data interpretation and prepares the information for tailored recommendation systems.
+
+**Pipeline Integration**
+The `process_files` function ties all steps together. For each file in the cleaned dataset:
+* Text is normalized.
+* Augmented text is generated.
+* Annotations and categorized segments are identified.
+* The augmented text is saved for further use.
+
+This multi-step approach ensures the data pipeline processes diverse inputs, enriches datasets with augmented content, and structures the data into meaningful formats for machine learning and AI applications in pediatric healthcare.
+
+### 2.2 Training Methodology
+
+The training methodology for the project encompassed several components, each tailored to meet specific needs. For the Random Forest (RF) model, the training involved preprocessing the dataset by encoding categorical features, normalizing numerical data, and addressing class imbalances. The model was trained on labeled datasets to predict diseases based on symptoms, using cross-validation to ensure generalization. An LLM was used to model disease-symptom relationships by encoding them as text (e.g., "Disease X causes Symptom Y") and querying with prompts. The model was trained using node embeddings to capture semantic connections and improve disease predictions. The recommendation system was developed using a TF-IDF vectorizer to convert medical texts into feature vectors, followed by cosine similarity calculations to rank recommendations. The chatbot leveraged pre-trained transformer models via Hugging Face. Fine-tuning involved training on medical datasets to optimize the chatbot for pediatric healthcare contexts, ensuring it could integrate predictive insights and offer relevant recommendations. All components were tested iteratively to refine their accuracy and usability, resulting in a cohesive system for pediatric healthcare support.
+
+### 2.3 Workflow
+
+1. **Data Preprocessing:** The raw dataset consisted of medical records, disease symptoms, and treatment recommendations in CSV and PDF formats. Preprocessing involved:
+    * Data extraction: In this phase, PDFs were converted into .txt files, and irrelevant text like author names, titles, and https links were removed.
+    * Data Cleaning: Irrelevant text (e.g., page numbers, metadata), stopwords, and unnecessary characters were removed. Medical synonyms were normalized using a predefined dictionary (e.g., "flu" → "influenza").
+    * Tokenization: Sentences were converted into individual tokens for better text representation.
+    * Augmentation: Data was enriched by replacing terms with synonyms and categorizing text into "Symptoms," "Treatment," and "Diagnosis" categories using SpaCy and NLTK tools.
+    After these steps, the data was tested using visualization techniques like most frequent words, word and character counts per file, and word clouds.
+
+2. **Feature Engineering:**
+    * TF-IDF Vectorization: Cleaned text was transformed into numerical representations for machine learning models.
+    * Ontology Preparation: An ontology was prepared from the CSV files.
+    * Creation of NER Models: Two NER models, BioBERT and ClinicalBERT, were trained on entities extracted from the initial ontology (due to licensing issues with SNOMED CT and UMLS).
+    * Entities Extraction from TXT Files: The best NER model (ClinicalBERT) was used to extract entities and annotations to enrich the ontology.
+    * Enrich the Ontology: The ontology was enriched with new entities and tested on Protégé.
+    * Graph Construction: A knowledge graph was created with nodes representing symptoms, diseases, and treatments, and edges representing relationships like co-occurrence or causal links.
+    * Label Encoding: Categorical data was converted into numerical formats.
+
+3. **Model Training:**
+    * Random Forest (RF) Model: Trained using preprocessed data to predict diseases based on symptoms. Cross-validation was performed.
+    * Large Language Model (LLM): Trained on the constructed graph to capture complex relationships from parts of the books and summarize them.
+    * Chatbot Fine-Tuning: The ClinicalGPT model from Hugging Face was fine-tuned.
+
+4. **Integration:** All trained components were integrated into a unified chatbot pipeline, enabling the chatbot to:
+    * Predict diseases using the RF model.
+    * Recommend treatments via the recommendation system.
+    * Engage in conversational AI.
+
+5. **Testing and Validation:**
+    * Unit Testing: Each component was tested individually.
+    * End-to-End Testing: Real-world scenarios were simulated.
+    * Metrics: Accuracy, relevance, and fluency were measured.
+
+### 2.4 System Design
+
+The system design includes the following components: Random Forest (RF) model, Large Language Models (LLM), and a Chatbot Fine-Tuning model.  These components work together in a pipeline to provide disease prediction, recommendations, and conversational interaction.
+
+## Results
+
+### 3.1 Data Preprocessing
+
+Data preprocessing involved multiple steps:
+* Cleaning: Irrelevant data was removed. Medical synonyms were normalized.
+* Tokenization: Sentences were split into tokens.
+* Vectorization: TF-IDF vectorization was used.
+* Tools Used: pandas, Scikit-learn, SpaCy, NLTK.
+
+### 3.2 Exploratory Data Analysis (EDA)
+
+EDA revealed:
+* Disease Trends: Respiratory infections, fevers, and gastrointestinal issues were most common.
+* Symptom Co-occurrence: Correlations were observed between symptoms like fever and fatigue, and cough and difficulty breathing.
+* Age and Gender Patterns: Younger children were more prone to viral infections, while older children exhibited symptoms of chronic conditions.
+* Visualization Tools: Bar charts and heatmaps were used.
+
+### 3.3 Modeling
+
+The modeling phase included:
+* Disease Prediction: A Random Forest model was trained and achieved 68% accuracy. Fine-tuned models like ClinicalGPT were also used.
+* Recommendation System: TF-IDF vectorization and cosine similarity were used.
+* Chatbot Integration: The chatbot was trained to understand context and generate responses.
+
+### 3.4 User Interface and Role-Based AI Interaction
+
+The user interface is designed to be intuitive and user-centric. A key feature is its role-based system, allowing users to select different categories—such as "Pediatric," "Medical Student," or "Parent"—to receive responses specifically tailored to their needs. The chat interface is simple, with an input field and a "Send" button. A unique functionality allows users to interrupt the AI mid-response. The system is free for all users.
+
+**Differences in AI Responses Based on User Roles:**
+* **Parent Role:** Simplified, reassuring, and practical guidance. Example: A parent asking about a dry cough, clogged nostrils, and sore throat received information about common causes like cold, flu, or allergies, with an emphasis on seeing a doctor.
+* **Medical Student Role:** Detailed, technical, and research-oriented information. Example: A medical student asking about weak eyesight in children aged 5-11 received an in-depth answer covering refractive errors, genetic and environmental risk factors, and references to textbooks and PubMed search terms.
+* **Pediatric Role:** Clinical and diagnostic considerations. Example: A pediatrician inquiring about a 4-year-old female with red spots and button-like skin texture received information about possible conditions like viral exanthems, allergic reactions, or dermatological conditions, with an emphasis on physical examination and diagnostic tests.
+
+### 3.5 Testing and Improvements
+
+**Testing Outcomes:**
+The system was tested on diverse scenarios, including edge cases. The RF model achieved 68% accuracy for disease prediction, and the recommendation system demonstrated good relevance.
+
+**Improvements:**
+* Context-Aware Responses: ClinicalGPT integration improved the chatbot's ability to understand conversations.
+* Error Handling: Robust error handling was implemented.
+
+## Projected Impact
+
+### 4.1 Accomplishments and Benefits
+
+The system offers:
+* Improved Accessibility to Pediatric Advice
+* Enhanced AI-Driven Medical Assistance
+* Support for Pediatricians
+* Parent-Friendly Design
+
+### 4.2 Future Improvements
+
+* Expanded Dataset Integration
+* Multi-Language Support
+* Medical Institution Collaboration
+* Real-Time Monitoring
+* Interactive Features
+* Integration of a predictive model for illness stage detection
+* Integration of Google Maps Model for finding pediatricians and pharmacies
+
